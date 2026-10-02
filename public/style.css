@@ -158,6 +158,19 @@ body {
   padding: 22px; max-height: 92vh; overflow: auto; box-shadow: 0 30px 60px rgba(0,0,0,.3);
 }
 .modal-wide { max-width: 860px; }
+.modal-narrow { max-width: 420px; }
+.auth-area { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.btn-outline {
+  background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.7);
+  padding: 10px 18px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 14px;
+  transition: background .15s;
+}
+.btn-outline:hover { background: rgba(255,255,255,.18); }
+.user-chip {
+  color: #fff; font-weight: 700; font-size: 14px;
+  background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
+  padding: 8px 14px; border-radius: 999px;
+}
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .modal-head h2 { margin: 0; font-size: 19px; word-break: break-word; }
 .btn-close {

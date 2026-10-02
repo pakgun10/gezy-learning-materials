@@ -8,7 +8,8 @@ Dibangun dengan **Bun + Hono + bun:sqlite** (tanpa database server terpisah).
 
 ## Fitur
 
-- 📤 Unggah file: `docx, doc, pdf, html, jpg/jpeg/png, gif, webp, svg, mp3, wav, m4a, mp4, webm, mov, pptx, xlsx, csv, zip, rar` (batas ukuran bisa diatur, bawaan 500 MB)
+- 🔑 **Login admin** (username + password, hash scrypt, sesi cookie HttpOnly 30 hari)
+- 📤 Unggah file (admin saja): `docx, doc, pdf, html, jpg/jpeg/png, gif, webp, svg, mp3, wav, m4a, mp4, webm, mov, pptx, xlsx, csv, zip, rar` (batas ukuran bisa diatur, bawaan 500 MB)
 - 🗂️ Filter per **kelas (7/8/9)**, per **kategori** (ATP, RPP, Modul Ajar, LKPD, Bahan Ajar, Media, Video, Audio, Asesmen, Lainnya), dan **pencarian** (judul, mapel, nama file)
 - 👁️ Pratinjau langsung di browser: gambar, PDF, HTML, video, dan audio
 - ⬇️ Unduh & 🗑️ hapus dokumen
@@ -27,10 +28,28 @@ bun run start      # mode biasa
 Buka http://localhost:3020 — port bisa diganti dengan variabel `PORT`,
 batas unggah dengan `MAX_UPLOAD_MB`.
 
+## Akun admin
+
+Baca (daftar dokumen, pratinjau, unduh) terbuka untuk umum, tetapi
+**mengunggah dan menghapus hanya bisa dilakukan setelah login**.
+
+Buat akun admin dengan (password minimal 10 karakter):
+
+```bash
+ADMIN_USERNAME=pakgun ADMIN_PASSWORD=<password-10-karakter> bun run setup-admin
+```
+
+Jalankan ulang perintah yang sama untuk mengganti password kapan saja.
+Password tidak pernah disimpan di kode maupun di Git — hanya hash-nya yang
+tersimpan di `data/gezy-materials.sqlite`.
+
 ## API ringkas
 
 | Method | Endpoint | Keterangan |
 |---|---|---|
+| POST | `/api/login` | Login (`{"username","password"}`) |
+| POST | `/api/logout` | Keluar |
+| GET | `/api/me` | Info sesi saat ini |
 | GET | `/api/meta` | Daftar kategori, kelas, batas unggah |
 | GET | `/api/stats` | Statistik dokumen |
 | GET | `/api/documents?grade=&category=&kind=&q=` | Daftar dokumen (dengan filter) |
@@ -53,7 +72,6 @@ Untuk online sungguhan, jalankan aplikasi ini di salah satu dari:
 
 ## Pengembangan berikutnya (ide)
 
-- 🔐 Login admin/guru (agar tidak semua orang bisa mengunggah/menghapus)
 - 🏷️ Tag & filter mata pelajaran
 - 📁 Tampilan folder per mapel
 - ☁️ Backup otomatis folder `data/`

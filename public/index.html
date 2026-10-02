@@ -19,7 +19,12 @@
         <p>Perpustakaan dokumen pembelajaran SMP — ATP, RPP, Modul Ajar, LKPD, video &amp; media</p>
       </div>
     </div>
-    <button id="btnOpenUpload" class="btn-primary">＋ Unggah Dokumen</button>
+      <div id="authArea" class="auth-area">
+        <button id="btnLogin" class="btn-outline" hidden>🔑 Masuk</button>
+        <button id="btnOpenUpload" class="btn-primary" hidden>＋ Unggah Dokumen</button>
+        <span id="userChip" class="user-chip" hidden></span>
+        <button id="btnLogout" class="btn-outline" hidden>Keluar</button>
+      </div>
   </div>
   <div class="stats" id="stats">
     <div class="stat"><span class="stat-num" id="statTotal">–</span><span class="stat-label">Total dokumen</span></div>
@@ -57,6 +62,29 @@
 </main>
 
 <footer class="footer">Gezy Learning Materials © 2026 • Bun + Hono + SQLite</footer>
+
+<!-- Modal Login -->
+<div id="loginModal" class="modal" hidden>
+  <div class="modal-card modal-narrow">
+    <div class="modal-head">
+      <h2>🔑 Masuk sebagai Admin</h2>
+      <button class="btn-close" data-close="loginModal" aria-label="Tutup">✕</button>
+    </div>
+    <form id="loginForm">
+      <label>Username
+        <input type="text" id="lUser" autocomplete="username" placeholder="cth. pakgun" required />
+      </label>
+      <label>Password
+        <input type="password" id="lPass" autocomplete="current-password" placeholder="••••••••••" required />
+      </label>
+      <p class="form-error" id="loginError" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="loginModal">Batal</button>
+        <button type="submit" class="btn-primary">Masuk</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- Modal Unggah -->
 <div id="uploadModal" class="modal" hidden>

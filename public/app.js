@@ -1,4 +1,4 @@
-const state = { grade: "", category: "", q: "" };
+const state = { grade: "", category: "", q: "", user: null };
 
 const KIND_ICON = {
   pdf: "📕", gambar: "🖼️", video: "🎬", audio: "🎧", dokumen: "📄",
@@ -82,7 +82,7 @@ async function loadDocs() {
       <div class="doc-actions">
         <button class="act" data-preview="${d.id}">👁 Lihat</button>
         <a class="act" href="${d.downloadUrl}">⬇ Unduh</a>
-        <button class="act danger" data-del="${d.id}">🗑 Hapus</button>
+        ${state.user ? `<button class="act danger" data-del="${d.id}">🗑 Hapus</button>` : ""}
       </div>
     </article>`)
     .join("");
@@ -202,5 +202,57 @@ $("#uploadForm").addEventListener("submit", (e) => {
   xhr.send(fd);
 });
 
+// ---------- Auth ----------
+function renderAuth() {
+  const logged = !!state.user;
+  $("#btnLogin").hidden = logged;
+  $("#btnOpenUpload").hidden = !logged;
+  $("#userChip").hidden = !logged;
+  $("#btnLogout").hidden = !logged;
+  if (logged) $("#userChip").textContent = `👤 ${state.user.username}`;
+}
+async function refreshMe() {
+  try {
+    const { user } = await (await fetch("/api/me")).json();
+    state.user = user;
+  } catch { state.user = null; }
+  renderAuth();
+}
+$("#btnLogin").addEventListener("click", () => {
+  $("#loginError").hidden = true;
+  $("#loginModal").hidden = false;
+  setTimeout(() => $("#lUser").focus(), 50);
+});
+$("#btnLogout").addEventListener("click", async () => {
+  await fetch("/api/logout", { method: "POST" });
+  state.user = null;
+  renderAuth();
+  loadDocs();
+  toast("Anda sudah keluar.");
+});
+$("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = $("#loginError");
+  err.hidden = true;
+  const r = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: $("#lUser").value, password: $("#lPass").value }),
+  });
+  if (r.ok) {
+    const { user } = await r.json();
+    state.user = user;
+    $("#loginModal").hidden = true;
+    e.target.reset();
+    renderAuth();
+    loadDocs();
+    toast(`Selamat datang, ${user.username}! 👋`);
+  } else {
+    try { err.textContent = (await r.json()).error || "Login gagal."; }
+    catch { err.textContent = "Login gagal."; }
+    err.hidden = false;
+  }
+});
+
 // ---------- Init ----------
-(async () => { await loadMeta(); await loadAll(); })();
+(async () => { await loadMeta(); await refreshMe(); await loadAll(); })();

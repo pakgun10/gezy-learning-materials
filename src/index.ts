@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { cors } from "hono/cors";
+import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { join, basename, extname } from "node:path";
 import { unlink } from "node:fs/promises";
 import {
@@ -10,17 +11,26 @@ import {
   GRADES,
   ACCEPTED_EXTS,
   kindOf,
+  SESSION_COOKIE,
+  SESSION_TTL_MS,
+  getUserByUsername,
+  createSession,
+  getSessionUser,
+  deleteSession,
+  cleanupExpiredSessions,
   type DocumentRow,
+  type SessionUser,
 } from "./db";
 
-const app = new Hono();
+const app = new Hono<{ Variables: { user: SessionUser } }>();
 
 app.use("/api/*", cors());
 
+cleanupExpiredSessions();
+
 const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB ?? 500);
 
-function publicDoc(d: DocumentRow) {
-  return {
+function publicDoc(d: DocumentRow) {  return {
     id: d.id,
     title: d.title,
     description: d.description,
@@ -37,6 +47,51 @@ function publicDoc(d: DocumentRow) {
     downloadUrl: `/api/documents/${d.id}/download`,
   };
 }
+
+// ---------- Autentikasi ----------
+
+async function requireLogin(c: any, next: any) {
+  const user = getSessionUser(getCookie(c, SESSION_COOKIE));
+  if (!user) return c.json({ error: "Silakan login terlebih dahulu." }, 401);
+  c.set("user", user);
+  await next();
+}
+
+app.post("/api/login", async (c) => {
+  let body: { username?: string; password?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Data tidak valid." }, 400);
+  }
+  const username = String(body.username ?? "").trim();
+  const password = String(body.password ?? "");
+  const user = username ? getUserByUsername(username) : null;
+  if (!user || !(await Bun.password.verify(password, user.password_hash))) {
+    return c.json({ error: "Username atau password salah." }, 401);
+  }
+  const token = createSession(user.id);
+  setCookie(c, SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "Lax",
+    path: "/",
+    maxAge: Math.floor(SESSION_TTL_MS / 1000),
+  });
+  return c.json({ user: { id: user.id, username: user.username, role: user.role } });
+});
+
+app.post("/api/logout", (c) => {
+  const token = getCookie(c, SESSION_COOKIE);
+  if (token) deleteSession(token);
+  deleteCookie(c, SESSION_COOKIE, { path: "/" });
+  return c.json({ ok: true });
+});
+
+app.get("/api/me", (c) => {
+  const user = getSessionUser(getCookie(c, SESSION_COOKIE));
+  if (!user) return c.json({ user: null });
+  return c.json({ user });
+});
 
 // ---------- API ----------
 
@@ -93,7 +148,7 @@ app.get("/api/documents", (c) => {
   return c.json({ documents: rows.map(publicDoc) });
 });
 
-app.post("/api/documents", async (c) => {
+app.post("/api/documents", requireLogin, async (c) => {
   const body = await c.req.parseBody();
   const file = body["file"];
   if (!(file instanceof File)) {
@@ -137,7 +192,7 @@ app.post("/api/documents", async (c) => {
   return c.json({ document: publicDoc(info) }, 201);
 });
 
-app.delete("/api/documents/:id", async (c) => {
+app.delete("/api/documents/:id", requireLogin, async (c) => {
   const id = Number(c.req.param("id"));
   const row = db.query("SELECT * FROM documents WHERE id = ?").get(id) as DocumentRow | null;
   if (!row) return c.json({ error: "Dokumen tidak ditemukan." }, 404);
