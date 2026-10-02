@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gezy Learning Materials — Dokumen Pembelajaran SMP</title>
+<meta name="description" content="Penyimpanan dokumen pembelajaran SMP: ATP, RPP, Modul Ajar, LKPD, video, dan media lainnya untuk Kelas 7, 8, dan 9." />
+<link rel="stylesheet" href="/style.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="brand">
+      <div class="logo">📚</div>
+      <div>
+        <h1>Gezy Learning Materials</h1>
+        <p>Perpustakaan dokumen pembelajaran SMP — ATP, RPP, Modul Ajar, LKPD, video &amp; media</p>
+      </div>
+    </div>
+    <button id="btnOpenUpload" class="btn-primary">＋ Unggah Dokumen</button>
+  </div>
+  <div class="stats" id="stats">
+    <div class="stat"><span class="stat-num" id="statTotal">–</span><span class="stat-label">Total dokumen</span></div>
+    <div class="stat clickable" data-grade="7"><span class="stat-num" id="stat7">–</span><span class="stat-label">Kelas 7</span></div>
+    <div class="stat clickable" data-grade="8"><span class="stat-num" id="stat8">–</span><span class="stat-label">Kelas 8</span></div>
+    <div class="stat clickable" data-grade="9"><span class="stat-num" id="stat9">–</span><span class="stat-label">Kelas 9</span></div>
+    <div class="stat"><span class="stat-num" id="statSize">–</span><span class="stat-label">Total ukuran</span></div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="toolbar">
+    <div class="grade-tabs" id="gradeTabs" role="tablist">
+      <button class="tab active" data-grade="">Semua Kelas</button>
+      <button class="tab" data-grade="7">Kelas 7</button>
+      <button class="tab" data-grade="8">Kelas 8</button>
+      <button class="tab" data-grade="9">Kelas 9</button>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input id="searchInput" type="search" placeholder="Cari judul, mapel, atau nama file…" />
+    </div>
+  </section>
+
+  <section class="chips" id="categoryChips"></section>
+
+  <section id="grid" class="grid" aria-live="polite"></section>
+
+  <section id="emptyState" class="empty" hidden>
+    <div class="empty-icon">🗂️</div>
+    <h2>Belum ada dokumen</h2>
+    <p>Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter, atau unggah dokumen pertama Anda.</p>
+    <button class="btn-primary" onclick="document.getElementById('btnOpenUpload').click()">＋ Unggah Dokumen</button>
+  </section>
+</main>
+
+<footer class="footer">Gezy Learning Materials © 2026 • Bun + Hono + SQLite</footer>
+
+<!-- Modal Unggah -->
+<div id="uploadModal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>Unggah Dokumen</h2>
+      <button class="btn-close" data-close="uploadModal" aria-label="Tutup">✕</button>
+    </div>
+    <form id="uploadForm">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" name="file" hidden required />
+        <div class="dz-icon">⬆️</div>
+        <div class="dz-text"><strong>Klik untuk memilih file</strong> atau seret &amp; letakkan di sini</div>
+        <div class="dz-hint">docx, pdf, html, gambar, audio, video, pptx, xlsx, zip — maks. <span id="maxSizeLabel">500</span> MB</div>
+        <div class="dz-file" id="dzFileName" hidden></div>
+      </label>
+      <div class="form-grid">
+        <label>Judul dokumen
+          <input type="text" id="fTitle" placeholder="Kosongkan untuk memakai nama file" />
+        </label>
+        <label>Mata pelajaran
+          <input type="text" id="fSubject" placeholder="cth. Informatika, Matematika" />
+        </label>
+        <label>Kelas *
+          <select id="fGrade" required>
+            <option value="7">Kelas 7</option>
+            <option value="8">Kelas 8</option>
+            <option value="9">Kelas 9</option>
+          </select>
+        </label>
+        <label>Kategori *
+          <select id="fCategory" required></select>
+        </label>
+      </div>
+      <label>Keterangan
+        <textarea id="fDesc" rows="2" placeholder="Catatan singkat tentang dokumen ini (opsional)"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="uploadModal">Batal</button>
+        <button type="submit" class="btn-primary" id="btnSubmitUpload">Unggah</button>
+      </div>
+      <div class="progress" id="uploadProgress" hidden><div class="progress-bar" id="uploadBar"></div></div>
+      <p class="form-error" id="uploadError" hidden></p>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Pratinjau -->
+<div id="previewModal" class="modal" hidden>
+  <div class="modal-card modal-wide">
+    <div class="modal-head">
+      <h2 id="previewTitle">Pratinjau</h2>
+      <button class="btn-close" data-close="previewModal" aria-label="Tutup">✕</button>
+    </div>
+    <div id="previewBody" class="preview-body"></div>
+    <div class="modal-actions">
+      <a id="previewDownload" class="btn-primary" href="#" download>⬇ Unduh</a>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/app.js"></script>
+</body>
+</html>
