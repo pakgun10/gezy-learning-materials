@@ -130,6 +130,7 @@ export async function upsertAdmin(username: string, password: string): Promise<v
   const existing = getUserByUsername(username);
   if (existing) {
     db.query("UPDATE users SET password_hash = ?, role = 'admin' WHERE username = ?").run(hash, username);
+    db.query("DELETE FROM sessions WHERE user_id = ?").run(existing.id);
   } else {
     db.query("INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')").run(username, hash);
   }

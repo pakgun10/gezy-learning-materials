@@ -9,6 +9,7 @@
 #
 # Mengembalikan backup: ekstrak arsip ke DATA_DIR lalu restart service.
 set -euo pipefail
+umask 077
 
 DATA_DIR="${DATA_DIR:-/var/lib/gezy-learning-materials}"
 BACKUP_DIR="${BACKUP_DIR:-/var/backups/gezy-learning-materials}"
@@ -20,6 +21,7 @@ if [ ! -f "$DATA_DIR/gezy-materials.sqlite" ]; then
 fi
 
 mkdir -p "$BACKUP_DIR"
+chmod 700 "$BACKUP_DIR"
 STAMP="$(date +%F_%H%M)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -36,6 +38,7 @@ db.close();
 cp -a "$DATA_DIR/uploads" "$WORK/uploads"
 
 tar -czf "$BACKUP_DIR/gezy-materials-$STAMP.tar.gz" -C "$WORK" .
+chmod 600 "$BACKUP_DIR/gezy-materials-$STAMP.tar.gz"
 find "$BACKUP_DIR" -name 'gezy-materials-*.tar.gz' -mtime +"$RETENTION_DAYS" -delete
 
 echo "OK: $BACKUP_DIR/gezy-materials-$STAMP.tar.gz ($(du -h "$BACKUP_DIR/gezy-materials-$STAMP.tar.gz" | cut -f1))"

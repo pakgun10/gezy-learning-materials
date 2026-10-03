@@ -22,8 +22,19 @@ Environment=LOGIN_MAX_FAIL=10
 Environment=LOGIN_WINDOW_MIN=10
 
 # Batas keamanan dasar:
+UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths=/var/lib/gezy-learning-materials
 
 [Install]
 WantedBy=multi-user.target

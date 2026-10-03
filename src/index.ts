@@ -27,8 +27,78 @@ const app = new Hono<{ Variables: { user: SessionUser } }>();
 // (Kalau suatu saat butuh akses lintas origin, batasi origin-nya secara eksplisit.)
 
 cleanupExpiredSessions();
+setInterval(cleanupExpiredSessions, 60 * 60 * 1000);
 
-const MAX_UPLOAD_MB = Number(process.env.MAX_UPLOAD_MB ?? 500);
+function envNumber(name: string, fallback: number, min: number, max: number): number {
+  const value = Number(process.env[name] ?? fallback);
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`${name} harus berupa angka antara ${min} dan ${max}.`);
+  }
+  return value;
+}
+
+const MAX_UPLOAD_MB = envNumber("MAX_UPLOAD_MB", 500, 1, 2048);
+const LOGIN_MAX_FAIL = envNumber("LOGIN_MAX_FAIL", 10, 1, 1000);
+const LOGIN_WINDOW_MS = envNumber("LOGIN_WINDOW_MIN", 10, 1, 24 * 60) * 60 * 1000;
+
+const MIME_BY_EXT: Record<string, string> = {
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  doc: "application/msword",
+  pdf: "application/pdf",
+  html: "text/html; charset=utf-8",
+  htm: "text/html; charset=utf-8",
+  txt: "text/plain; charset=utf-8",
+  md: "text/markdown; charset=utf-8",
+  odt: "application/vnd.oasis.opendocument.text",
+  rtf: "application/rtf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  gif: "image/gif",
+  webp: "image/webp",
+  svg: "image/svg+xml",
+  bmp: "image/bmp",
+  avif: "image/avif",
+  mp3: "audio/mpeg",
+  wav: "audio/wav",
+  m4a: "audio/mp4",
+  ogg: "audio/ogg",
+  flac: "audio/flac",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  mov: "video/quicktime",
+  mkv: "video/x-matroska",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ppt: "application/vnd.ms-powerpoint",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel",
+  csv: "text/csv; charset=utf-8",
+  zip: "application/zip",
+  rar: "application/vnd.rar",
+  "7z": "application/x-7z-compressed",
+};
+
+const PREVIEW_KINDS = new Set(["gambar", "video", "audio", "pdf", "html"]);
+
+function safeMime(ext: string): string {
+  return MIME_BY_EXT[ext.toLowerCase()] ?? "application/octet-stream";
+}
+
+function safeFilename(name: string): string {
+  const clean = basename(name.replaceAll("\\", "/"))
+    .replace(/[\\\r\n"]/g, "_")
+    .trim()
+    .slice(0, 255);
+  return clean || "download";
+}
+
+app.use("*", async (c, next) => {
+  await next();
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("X-Frame-Options", "SAMEORIGIN");
+  c.header("Referrer-Policy", "no-referrer");
+  c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+});
 
 function publicDoc(d: DocumentRow) {  return {
     id: d.id,
@@ -39,7 +109,7 @@ function publicDoc(d: DocumentRow) {  return {
     subject: d.subject,
     originalName: d.original_name,
     ext: d.ext,
-    mime: d.mime,
+    mime: safeMime(d.ext),
     kind: d.kind,
     size: d.size,
     createdAt: d.created_at,
@@ -51,8 +121,6 @@ function publicDoc(d: DocumentRow) {  return {
 // ---------- Autentikasi ----------
 
 // Rate limit login: batasi percobaan GAGAL per IP agar tidak bisa di-brute-force.
-const LOGIN_MAX_FAIL = Number(process.env.LOGIN_MAX_FAIL ?? 10);
-const LOGIN_WINDOW_MS = Number(process.env.LOGIN_WINDOW_MIN ?? 10) * 60 * 1000;
 const loginFails = new Map<string, { count: number; resetAt: number }>();
 
 setInterval(() => {
@@ -61,9 +129,11 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 function clientIp(c: any): string {
-  // Di balik nginx reverse proxy, IP asli ada di X-Forwarded-For.
+  // Nginx harus menimpa X-Real-IP/X-Forwarded-For, bukan meneruskan nilai client.
+  const real = c.req.header("x-real-ip")?.trim();
+  if (real) return real;
   const fwd = c.req.header("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
+  if (fwd) return fwd.split(",").at(-1)?.trim() || "unknown";
   return "unknown";
 }
 
@@ -235,7 +305,8 @@ app.post("/api/documents", requireLogin, async (c) => {
     return c.json({ error: `Ukuran file melebihi batas ${MAX_UPLOAD_MB} MB.` }, 413);
   }
 
-  const ext = extname(file.name).replace(".", "").toLowerCase();
+  const originalName = safeFilename(file.name);
+  const ext = extname(originalName).replace(".", "").toLowerCase();
   if (!ACCEPTED_EXTS.has(ext)) {
     return c.json({ error: `Jenis file .${ext || "?"} belum didukung.` }, 415);
   }
@@ -246,11 +317,11 @@ app.post("/api/documents", requireLogin, async (c) => {
   }
   const categoryRaw = String(body["category"] ?? "Lainnya");
   const category = (CATEGORIES as readonly string[]).includes(categoryRaw) ? categoryRaw : "Lainnya";
-  const title = String(body["title"] ?? "").trim() || file.name.replace(/\.[^.]+$/, "");
-  const description = String(body["description"] ?? "").trim();
-  const subject = String(body["subject"] ?? "").trim();
+  const title = (String(body["title"] ?? "").trim() || originalName.replace(/\.[^.]+$/, "")).slice(0, 200);
+  const description = String(body["description"] ?? "").trim().slice(0, 2000);
+  const subject = String(body["subject"] ?? "").trim().slice(0, 100);
 
-  const safeBase = basename(file.name, extname(file.name))
+  const safeBase = basename(originalName, extname(originalName))
     .replace(/[^\w\- ]+/g, "")
     .trim()
     .slice(0, 60) || "dokumen";
@@ -258,18 +329,24 @@ app.post("/api/documents", requireLogin, async (c) => {
   const dest = join(UPLOAD_DIR, storedName);
   await Bun.write(dest, file);
 
-  const info = db
-    .query(
-      `INSERT INTO documents (title, description, category, grade, subject, original_name, stored_name, ext, mime, kind, size)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
-    )
-    .get(title, description, category, grade, subject, file.name, storedName, ext, file.type || "", kindOf(ext), file.size) as DocumentRow;
+  try {
+    const info = db
+      .query(
+        `INSERT INTO documents (title, description, category, grade, subject, original_name, stored_name, ext, mime, kind, size)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
+      )
+      .get(title, description, category, grade, subject, originalName, storedName, ext, safeMime(ext), kindOf(ext), file.size) as DocumentRow;
 
-  return c.json({ document: publicDoc(info) }, 201);
+    return c.json({ document: publicDoc(info) }, 201);
+  } catch (error) {
+    await unlink(dest).catch(() => {});
+    throw error;
+  }
 });
 
 app.delete("/api/documents/:id", requireLogin, async (c) => {
   const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: "ID tidak valid." }, 400);
   const row = db.query("SELECT * FROM documents WHERE id = ?").get(id) as DocumentRow | null;
   if (!row) return c.json({ error: "Dokumen tidak ditemukan." }, 404);
   db.query("DELETE FROM documents WHERE id = ?").run(id);
@@ -334,13 +411,14 @@ app.patch("/api/documents/:id", requireLogin, async (c) => {
 
 app.get("/api/documents/:id/download", (c) => {
   const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: "ID tidak valid." }, 400);
   const row = db.query("SELECT * FROM documents WHERE id = ?").get(id) as DocumentRow | null;
   if (!row) return c.json({ error: "Dokumen tidak ditemukan." }, 404);
   const f = Bun.file(join(UPLOAD_DIR, row.stored_name));
   return new Response(f, {
     headers: {
-      "Content-Type": row.mime || "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${row.original_name.replace(/"/g, "")}"`,
+      "Content-Type": safeMime(row.ext),
+      "Content-Disposition": `attachment; filename="${safeFilename(row.original_name)}"`,
       "X-Content-Type-Options": "nosniff",
     },
   });
@@ -358,8 +436,10 @@ app.get("/files/:name", (c) => {
   if (!row) return c.json({ error: "File tidak ditemukan." }, 404);
   const f = Bun.file(join(UPLOAD_DIR, name));
   const headers: Record<string, string> = {
-    "Content-Type": row.mime || "application/octet-stream",
-    "Content-Disposition": "inline",
+    "Content-Type": safeMime(row.ext),
+    "Content-Disposition": PREVIEW_KINDS.has(row.kind)
+      ? "inline"
+      : `attachment; filename="${safeFilename(row.original_name)}"`,
     "Cache-Control": "private, max-age=3600",
     "X-Content-Type-Options": "nosniff",
   };
@@ -377,4 +457,4 @@ app.get("*", serveStatic({ path: "./public/index.html" }));
 const port = Number(process.env.PORT ?? 3020);
 console.log(`Gezy Learning Materials berjalan di http://localhost:${port}`);
 
-export default { port, fetch: app.fetch };
+export default { hostname: "127.0.0.1", port, fetch: app.fetch };

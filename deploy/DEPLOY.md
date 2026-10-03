@@ -12,10 +12,11 @@ Ikuti panduan resmi di situs Bun (bun.sh), lalu catat lokasi binary:
 ## 2. Ambil kode
 
     sudo mkdir -p /opt/gezy-learning-materials /var/lib/gezy-learning-materials /var/backups/gezy-learning-materials
-    sudo chown -R www-data:www-data /opt/gezy-learning-materials /var/lib/gezy-learning-materials /var/backups/gezy-learning-materials
-    sudo -u www-data git clone https://github.com/pakgun10/gezy-learning-materials.git /opt/gezy-learning-materials
+    sudo git clone https://github.com/pakgun10/gezy-learning-materials.git /opt/gezy-learning-materials
     cd /opt/gezy-learning-materials
-    sudo -u www-data bun install
+    sudo bun install --frozen-lockfile
+    sudo chown -R root:root /opt/gezy-learning-materials
+    sudo install -d -o www-data -g www-data -m 700 /var/lib/gezy-learning-materials /var/backups/gezy-learning-materials
 
 ## 3. Buat akun admin
 
@@ -61,10 +62,20 @@ Lalu pasang cron sebagai root (crontab -e), tambahkan baris:
 Arsip di /var/backups/gezy-learning-materials/ (retensi 14 hari).
 Unduh salinannya ke tempat aman secara berkala.
 
+Batasi log sistem agar tidak memenuhi disk:
+
+    sudo install -m 0755 deploy/gezy-log-cap.sh /usr/local/sbin/gezy-log-cap
+    sudo install -m 0644 deploy/gezy-log-cap.service deploy/gezy-log-cap.timer /etc/systemd/system/
+    sudo install -d -m 0755 /etc/systemd/journald.conf.d
+    sudo install -m 0644 deploy/journald-gezy.conf /etc/systemd/journald.conf.d/99-gezy-log-size.conf
+    sudo systemctl daemon-reload
+    sudo systemctl restart systemd-journald
+    sudo systemctl enable --now gezy-log-cap.timer
+
 ## 7. Update aplikasi
 
     cd /opt/gezy-learning-materials
-    sudo -u www-data git pull && sudo -u www-data bun install
+    sudo git pull --ff-only && sudo bun install --frozen-lockfile
     sudo systemctl restart gezy-materials
 
 Data di /var/lib/gezy-learning-materials tidak tertimpa karena terpisah

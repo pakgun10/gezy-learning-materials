@@ -1,0 +1,7 @@
+[Unit]
+Description=Keep /var/log below 700 MiB
+After=systemd-journald.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/gezy-log-cap
