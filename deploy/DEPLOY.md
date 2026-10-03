@@ -38,13 +38,13 @@ ExecStart = lokasi bun dari `which bun`), lalu:
 
 ## 5. Pasang nginx + HTTPS
 
-Sesuaikan server_name di deploy/nginx.conf (mis. materi.gezytech.web.id),
+Sesuaikan server_name di deploy/nginx.conf (mis. materials.gezytech.web.id),
 arahkan DNS ke IP VPS, lalu:
 
     sudo cp deploy/nginx.conf /etc/nginx/sites-available/gezy-materials
     sudo ln -s /etc/nginx/sites-available/gezy-materials /etc/nginx/sites-enabled/
     sudo nginx -t && sudo systemctl reload nginx
-    sudo certbot --nginx -d materi.gezytech.web.id
+    sudo certbot --nginx -d materials.gezytech.web.id
 
 Setelah HTTPS aktif, cookie sesi otomatis Secure (COOKIE_SECURE=1 dan nginx
 mengirim header X-Forwarded-Proto: https).

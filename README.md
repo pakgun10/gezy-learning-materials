@@ -72,7 +72,7 @@ bisa memakai SQLite. Jadi aplikasi ini tidak bisa di-host di GitHub Pages.
 GitHub di sini berfungsi sebagai **tempat menyimpan kode** (dan backup-nya).
 Untuk online sungguhan, jalankan aplikasi ini di salah satu dari:
 
-1. **VPS/server sendiri** (pola yang sama seperti GezyLMS: Bun sebagai service + Nginx sebagai reverse proxy + domain sendiri, mis. `materi.gezytech.web.id`)
+1. **VPS/server sendiri** (pola yang sama seperti GezyLMS: Bun sebagai service + Nginx sebagai reverse proxy + domain sendiri, mis. `materials.gezytech.web.id`)
 2. **Platform yang mendukung Bun/Node**: Railway, Render, Fly.io, Hugging Face Spaces, dsb.
 
 ## Pengembangan berikutnya (ide)
