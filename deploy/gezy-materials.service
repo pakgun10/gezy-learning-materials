@@ -1,0 +1,29 @@
+[Unit]
+Description=Gezy Learning Materials (Bun + Hono + SQLite)
+After=network.target
+
+[Service]
+Type=simple
+# Ganti User sesuai pengguna di VPS (mis. www-data atau nama user Pak Gun).
+User=www-data
+# Folder kode hasil git clone:
+WorkingDirectory=/opt/gezy-learning-materials
+# Lokasi bun — sesuaikan dengan hasil `which bun` di VPS.
+ExecStart=/usr/local/bin/bun run src/index.ts
+Restart=always
+RestartSec=5
+
+# Konfigurasi lewat environment (lihat .env.example di repo):
+Environment=PORT=3020
+Environment=DATA_DIR=/var/lib/gezy-learning-materials
+Environment=COOKIE_SECURE=1
+Environment=MAX_UPLOAD_MB=500
+Environment=LOGIN_MAX_FAIL=10
+Environment=LOGIN_WINDOW_MIN=10
+
+# Batas keamanan dasar:
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

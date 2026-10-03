@@ -53,6 +53,10 @@
 
   <section id="grid" class="grid" aria-live="polite"></section>
 
+  <div class="load-more-wrap">
+    <button id="loadMoreBtn" class="btn-ghost" hidden>Muat lebih banyak ↓</button>
+  </div>
+
   <section id="emptyState" class="empty" hidden>
     <div class="empty-icon">🗂️</div>
     <h2>Belum ada dokumen</h2>
@@ -128,6 +132,45 @@
       </div>
       <div class="progress" id="uploadProgress" hidden><div class="progress-bar" id="uploadBar"></div></div>
       <p class="form-error" id="uploadError" hidden></p>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Edit -->
+<div id="editModal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>✏️ Edit Dokumen</h2>
+      <button class="btn-close" data-close="editModal" aria-label="Tutup">✕</button>
+    </div>
+    <form id="editForm">
+      <input type="hidden" id="eId" />
+      <div class="form-grid">
+        <label>Judul dokumen
+          <input type="text" id="eTitle" required maxlength="200" />
+        </label>
+        <label>Mata pelajaran
+          <input type="text" id="eSubject" maxlength="100" placeholder="cth. Informatika, Matematika" />
+        </label>
+        <label>Kelas *
+          <select id="eGrade" required>
+            <option value="7">Kelas 7</option>
+            <option value="8">Kelas 8</option>
+            <option value="9">Kelas 9</option>
+          </select>
+        </label>
+        <label>Kategori *
+          <select id="eCategory" required></select>
+        </label>
+      </div>
+      <label>Keterangan
+        <textarea id="eDesc" rows="2" maxlength="2000" placeholder="Catatan singkat (opsional)"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-close="editModal">Batal</button>
+        <button type="submit" class="btn-primary">Simpan Perubahan</button>
+      </div>
+      <p class="form-error" id="editError" hidden></p>
     </form>
   </div>
 </div>

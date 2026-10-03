@@ -216,3 +216,6 @@ form input[type="text"], form select, form textarea {
   .form-grid { grid-template-columns: 1fr; }
   .brand h1 { font-size: 21px; }
 }
+
+/* --- Muat lebih banyak (paginasi) --- */
+.load-more-wrap { text-align: center; margin: 0.4rem 0 2rem; }

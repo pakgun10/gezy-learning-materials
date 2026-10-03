@@ -2,7 +2,8 @@ import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-export const DATA_DIR = join(import.meta.dir, "..", "data");
+export const DATA_DIR =
+  process.env.DATA_DIR?.trim() || join(import.meta.dir, "..", "data");
 export const UPLOAD_DIR = join(DATA_DIR, "uploads");
 
 mkdirSync(UPLOAD_DIR, { recursive: true });

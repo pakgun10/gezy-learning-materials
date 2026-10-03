@@ -1,4 +1,6 @@
 const state = { grade: "", category: "", q: "", user: null };
+const PAGE_LIMIT = 24;
+let docPage = 1, docPages = 1, docsList = [];
 
 const KIND_ICON = {
   pdf: "📕", gambar: "🖼️", video: "🎬", audio: "🎧", dokumen: "📄",
@@ -30,6 +32,7 @@ function esc(s) {
 async function loadMeta() {
   const meta = await (await fetch("/api/meta")).json();
   $("#fCategory").innerHTML = meta.categories.map((c) => `<option>${esc(c)}</option>`).join("");
+  $("#eCategory").innerHTML = meta.categories.map((c) => `<option>${esc(c)}</option>`).join("");
   $("#maxSizeLabel").textContent = meta.maxUploadMb;
   window._categories = meta.categories;
 }
@@ -56,15 +59,21 @@ async function loadStats() {
   );
 }
 
-async function loadDocs() {
+async function loadDocs(append = false) {
+  if (!append) docPage = 1;
   const p = new URLSearchParams();
   if (state.grade) p.set("grade", state.grade);
   if (state.category) p.set("category", state.category);
   if (state.q) p.set("q", state.q);
-  const { documents } = await (await fetch(`/api/documents?${p}`)).json();
+  p.set("page", append ? docPage + 1 : 1);
+  p.set("limit", PAGE_LIMIT);
+  const { documents, page, pages } = await (await fetch(`/api/documents?${p}`)).json();
+  docPage = page; docPages = pages;
+  docsList = append ? docsList.concat(documents) : documents;
   const grid = $("#grid");
-  $("#emptyState").hidden = documents.length > 0;
-  grid.innerHTML = documents
+  $("#emptyState").hidden = docsList.length > 0;
+  $("#loadMoreBtn").hidden = docPage >= docPages;
+  grid.innerHTML = docsList
     .map((d) => `
     <article class="doc-card">
       <div class="doc-top">
@@ -82,14 +91,18 @@ async function loadDocs() {
       <div class="doc-actions">
         <button class="act" data-preview="${d.id}">👁 Lihat</button>
         <a class="act" href="${d.downloadUrl}">⬇ Unduh</a>
+        ${state.user ? `<button class="act" data-edit="${d.id}">✏️ Edit</button>` : ""}
         ${state.user ? `<button class="act danger" data-del="${d.id}">🗑 Hapus</button>` : ""}
       </div>
     </article>`)
     .join("");
-  window._docs = Object.fromEntries(documents.map((d) => [d.id, d]));
+  window._docs = Object.fromEntries(docsList.map((d) => [d.id, d]));
   grid.querySelectorAll("[data-preview]").forEach((b) => b.addEventListener("click", () => openPreview(window._docs[b.dataset.preview])));
+  grid.querySelectorAll("[data-edit]").forEach((b) => b.addEventListener("click", () => openEdit(window._docs[b.dataset.edit])));
   grid.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", () => delDoc(window._docs[b.dataset.del])));
 }
+
+$("#loadMoreBtn").addEventListener("click", () => loadDocs(true));
 
 async function loadAll() { await loadStats(); await loadDocs(); }
 
@@ -113,6 +126,46 @@ async function delDoc(d) {
   if (r.ok) { toast("Dokumen dihapus."); loadAll(); }
   else toast("Gagal menghapus dokumen.");
 }
+
+// ---------- Edit metadata ----------
+function openEdit(d) {
+  if (!d) return;
+  $("#eId").value = d.id;
+  $("#eTitle").value = d.title ?? "";
+  $("#eSubject").value = d.subject ?? "";
+  $("#eGrade").value = String(d.grade);
+  $("#eCategory").value = d.category;
+  $("#eDesc").value = d.description ?? "";
+  $("#editError").hidden = true;
+  $("#editModal").hidden = false;
+}
+
+$("#editForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = $("#editError");
+  err.hidden = true;
+  const id = $("#eId").value;
+  const r = await fetch(`/api/documents/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: $("#eTitle").value,
+      subject: $("#eSubject").value,
+      grade: $("#eGrade").value,
+      category: $("#eCategory").value,
+      description: $("#eDesc").value,
+    }),
+  });
+  if (r.ok) {
+    $("#editModal").hidden = true;
+    toast("Perubahan disimpan ✏️");
+    loadDocs(false);
+  } else {
+    try { err.textContent = (await r.json()).error || "Gagal menyimpan perubahan."; }
+    catch { err.textContent = "Gagal menyimpan perubahan."; }
+    err.hidden = false;
+  }
+});
 
 // ---------- Filter events ----------
 document.querySelectorAll("#gradeTabs .tab").forEach((t) =>
