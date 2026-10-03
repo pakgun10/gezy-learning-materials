@@ -451,6 +451,12 @@ app.get("/files/:name", (c) => {
 
 // ---------- Frontend ----------
 
+app.use("/*", async (c, next) => {
+  if (["/", "/index.html", "/app.js"].includes(c.req.path)) {
+    c.header("Cache-Control", "no-store");
+  }
+  await next();
+});
 app.use("/*", serveStatic({ root: "./public" }));
 app.get("*", serveStatic({ path: "./public/index.html" }));
 

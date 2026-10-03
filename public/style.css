@@ -12,6 +12,7 @@
   --shadow-hover: 0 14px 34px rgba(31, 38, 95, 0.14);
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; }
 body {
   font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;

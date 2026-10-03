@@ -196,7 +196,7 @@ function openUpload() {
   modal.hidden = false;
 }
 $("#btnOpenUpload").addEventListener("click", openUpload);
-$("#btnEmptyUpload").addEventListener("click", openUpload);
+$("#btnEmptyUpload")?.addEventListener("click", openUpload);
 document.querySelectorAll("[data-close]").forEach((b) =>
   b.addEventListener("click", () => {
     document.getElementById(b.dataset.close).hidden = true;
@@ -264,13 +264,20 @@ $("#uploadForm").addEventListener("submit", (e) => {
 function renderAuth() {
   const logged = !!state.user;
   $("#btnLogin").hidden = logged;
-  $("#btnOpenUpload").hidden = !logged;
-  $("#btnEmptyUpload").hidden = !logged;
+  for (const button of [$("#btnOpenUpload"), $("#btnEmptyUpload")]) {
+    if (!button) continue;
+    button.hidden = !logged;
+    button.toggleAttribute("disabled", !logged);
+    button.setAttribute("aria-hidden", String(!logged));
+  }
   $("#userChip").hidden = !logged;
   $("#btnLogout").hidden = !logged;
-  $("#emptyHint").textContent = logged
-    ? "Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter, atau unggah dokumen pertama Anda."
-    : "Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter atau masuk sebagai admin untuk mengunggah dokumen.";
+  const emptyHint = $("#emptyHint");
+  if (emptyHint) {
+    emptyHint.textContent = logged
+      ? "Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter, atau unggah dokumen pertama Anda."
+      : "Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter atau masuk sebagai admin untuk mengunggah dokumen.";
+  }
   if (logged) $("#userChip").textContent = `👤 ${state.user.username}`;
 }
 async function refreshMe() {
