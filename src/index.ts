@@ -452,7 +452,7 @@ app.get("/files/:name", (c) => {
 // ---------- Frontend ----------
 
 app.use("/*", async (c, next) => {
-  if (["/", "/index.html", "/app.js"].includes(c.req.path)) {
+  if (["/", "/index.html", "/app.js", "/style.css"].includes(c.req.path)) {
     c.header("Cache-Control", "no-store");
   }
   await next();
