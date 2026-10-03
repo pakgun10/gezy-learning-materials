@@ -191,7 +191,12 @@ $("#searchInput").addEventListener("input", (e) => {
 
 // ---------- Upload ----------
 const modal = $("#uploadModal");
-$("#btnOpenUpload").addEventListener("click", () => (modal.hidden = false));
+function openUpload() {
+  if (!state.user) return;
+  modal.hidden = false;
+}
+$("#btnOpenUpload").addEventListener("click", openUpload);
+$("#btnEmptyUpload").addEventListener("click", openUpload);
 document.querySelectorAll("[data-close]").forEach((b) =>
   b.addEventListener("click", () => {
     document.getElementById(b.dataset.close).hidden = true;
@@ -260,8 +265,12 @@ function renderAuth() {
   const logged = !!state.user;
   $("#btnLogin").hidden = logged;
   $("#btnOpenUpload").hidden = !logged;
+  $("#btnEmptyUpload").hidden = !logged;
   $("#userChip").hidden = !logged;
   $("#btnLogout").hidden = !logged;
+  $("#emptyHint").textContent = logged
+    ? "Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter, atau unggah dokumen pertama Anda."
+    : "Tidak ada dokumen yang cocok dengan filter ini. Coba ubah filter atau masuk sebagai admin untuk mengunggah dokumen.";
   if (logged) $("#userChip").textContent = `👤 ${state.user.username}`;
 }
 async function refreshMe() {
