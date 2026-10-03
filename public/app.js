@@ -191,7 +191,14 @@ $("#searchInput").addEventListener("input", (e) => {
 
 // ---------- Upload ----------
 const modal = $("#uploadModal");
-$("#btnOpenUpload").addEventListener("click", () => (modal.hidden = false));
+$("#btnOpenUpload").addEventListener("click", () => {
+  if (!state.user) { // pengaman: kalau belum login, arahkan ke login
+    $("#loginError").hidden = true;
+    $("#loginModal").hidden = false;
+    return;
+  }
+  modal.hidden = false;
+});
 document.querySelectorAll("[data-close]").forEach((b) =>
   b.addEventListener("click", () => {
     document.getElementById(b.dataset.close).hidden = true;

@@ -67,6 +67,9 @@ body {
 }
 .btn-ghost:hover { background: #f2f4fb; }
 
+/* Atribut hidden harus selalu menang atas display dari class (mis. .btn-primary). */
+[hidden] { display: none !important; }
+
 /* ---------- Layout ---------- */
 .container { max-width: 1100px; margin: -38px auto 0; padding: 0 20px 30px; }
 .toolbar {
