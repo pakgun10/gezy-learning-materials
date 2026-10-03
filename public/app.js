@@ -192,7 +192,11 @@ $("#searchInput").addEventListener("input", (e) => {
 // ---------- Upload ----------
 const modal = $("#uploadModal");
 function openUpload() {
-  if (!state.user) return;
+  if (!state.user) {
+    $("#loginError").hidden = true;
+    $("#loginModal").hidden = false;
+    return;
+  }
   modal.hidden = false;
 }
 $("#btnOpenUpload").addEventListener("click", openUpload);
