@@ -2,7 +2,7 @@
 
 Aplikasi web untuk **menyimpan dan mengelola dokumen pembelajaran SMP** — ATP, RPP,
 Modul Ajar, LKPD, bahan ajar, media, video, audio, dan asesmen — terpisah rapi per
-**Kelas 7, 8, dan 9**.
+**Kelas 7, 8, 9, dan Umum** (misalnya buku referensi, pelajaran, pendamping, atau panduan).
 
 Dibangun dengan **Bun + Hono + bun:sqlite** (tanpa database server terpisah).
 
@@ -57,7 +57,7 @@ tersimpan di `data/gezy-materials.sqlite`.
 | GET | `/api/stats` | Statistik dokumen |
 | GET | `/api/health` | Cek hidup (untuk monitoring) |
 | GET | `/api/documents?grade=&category=&kind=&q=&page=&limit=` | Daftar dokumen (dengan filter + paginasi) |
-| POST | `/api/documents` | Unggah (multipart, field: `file, title, description, category, grade, subject`) |
+| POST | `/api/documents` | Unggah (multipart, field: `file, title, description, category, grade, subject`; `grade=0` berarti Umum) |
 | PATCH | `/api/documents/:id` | Edit metadata (JSON: `title, description, category, grade, subject`) |
 | GET | `/api/documents/:id/download` | Unduh file |
 | DELETE | `/api/documents/:id` | Hapus dokumen + file |

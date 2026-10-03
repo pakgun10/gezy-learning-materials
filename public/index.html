@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Gezy Learning Materials — Dokumen Pembelajaran SMP</title>
-<meta name="description" content="Penyimpanan dokumen pembelajaran SMP: ATP, RPP, Modul Ajar, LKPD, video, dan media lainnya untuk Kelas 7, 8, dan 9." />
+<meta name="description" content="Penyimpanan dokumen pembelajaran SMP: ATP, RPP, Modul Ajar, LKPD, buku umum, video, dan media lainnya untuk Kelas 7, 8, dan 9." />
 <link rel="stylesheet" href="/style.css?v=hidden-upload-controls-20261003" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>" />
 </head>
@@ -38,10 +38,11 @@
 <main class="container">
   <section class="toolbar">
     <div class="grade-tabs" id="gradeTabs" role="tablist">
-      <button class="tab active" data-grade="">Semua Kelas</button>
+      <button class="tab active" data-grade="">Semua</button>
       <button class="tab" data-grade="7">Kelas 7</button>
       <button class="tab" data-grade="8">Kelas 8</button>
       <button class="tab" data-grade="9">Kelas 9</button>
+      <button class="tab" data-grade="0">Umum</button>
     </div>
     <div class="search-box">
       <span class="search-icon">🔍</span>
@@ -112,8 +113,9 @@
         <label>Mata pelajaran
           <input type="text" id="fSubject" placeholder="cth. Informatika, Matematika" />
         </label>
-        <label>Kelas *
+        <label>Kelompok *
           <select id="fGrade" required>
+            <option value="0">Umum</option>
             <option value="7">Kelas 7</option>
             <option value="8">Kelas 8</option>
             <option value="9">Kelas 9</option>
@@ -152,8 +154,9 @@
         <label>Mata pelajaran
           <input type="text" id="eSubject" maxlength="100" placeholder="cth. Informatika, Matematika" />
         </label>
-        <label>Kelas *
+        <label>Kelompok *
           <select id="eGrade" required>
+            <option value="0">Umum</option>
             <option value="7">Kelas 7</option>
             <option value="8">Kelas 8</option>
             <option value="9">Kelas 9</option>

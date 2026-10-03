@@ -21,7 +21,7 @@ db.exec(`
     title        TEXT NOT NULL,
     description  TEXT NOT NULL DEFAULT '',
     category     TEXT NOT NULL,
-    grade        INTEGER NOT NULL CHECK (grade IN (7, 8, 9)),
+    grade        INTEGER NOT NULL CHECK (grade IN (0, 7, 8, 9)),
     subject      TEXT NOT NULL DEFAULT '',
     original_name TEXT NOT NULL,
     stored_name  TEXT NOT NULL UNIQUE,
@@ -49,6 +49,41 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `);
+
+// Migrasi tabel lama agar dokumen umum dapat memakai grade 0.
+const documentSchema = db
+  .query("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'documents'")
+  .get() as { sql: string | null } | null;
+const normalizedDocumentSchema = documentSchema?.sql?.replace(/\s+/g, "") ?? "";
+if (!normalizedDocumentSchema.includes("gradeIN(0,7,8,9)")) {
+  db.exec(`
+    BEGIN IMMEDIATE;
+    CREATE TABLE documents_migrated (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      title         TEXT NOT NULL,
+      description   TEXT NOT NULL DEFAULT '',
+      category      TEXT NOT NULL,
+      grade         INTEGER NOT NULL CHECK (grade IN (0, 7, 8, 9)),
+      subject       TEXT NOT NULL DEFAULT '',
+      original_name TEXT NOT NULL,
+      stored_name   TEXT NOT NULL UNIQUE,
+      ext           TEXT NOT NULL,
+      mime          TEXT NOT NULL DEFAULT '',
+      kind          TEXT NOT NULL,
+      size          INTEGER NOT NULL DEFAULT 0,
+      created_at    TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    );
+    INSERT INTO documents_migrated
+      (id, title, description, category, grade, subject, original_name, stored_name, ext, mime, kind, size, created_at)
+      SELECT id, title, description, category, grade, subject, original_name, stored_name, ext, mime, kind, size, created_at
+      FROM documents;
+    DROP TABLE documents;
+    ALTER TABLE documents_migrated RENAME TO documents;
+    CREATE INDEX IF NOT EXISTS idx_documents_grade ON documents(grade);
+    CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category);
+    COMMIT;
+  `);
+}
 
 export type DocumentRow = {
   id: number;
@@ -79,7 +114,7 @@ export const CATEGORIES = [
   "Lainnya",
 ] as const;
 
-export const GRADES = [7, 8, 9] as const;
+export const GRADES = [0, 7, 8, 9] as const;
 
 /** Kelompokkan ekstensi file ke jenis tampilan (ikon & preview). */
 export function kindOf(ext: string): string {

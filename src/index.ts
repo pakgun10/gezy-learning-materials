@@ -313,7 +313,7 @@ app.post("/api/documents", requireLogin, async (c) => {
 
   const grade = Number(body["grade"]);
   if (!GRADES.includes(grade as (typeof GRADES)[number])) {
-    return c.json({ error: "Kelas wajib dipilih: 7, 8, atau 9." }, 400);
+    return c.json({ error: "Kelompok wajib dipilih: Umum, 7, 8, atau 9." }, 400);
   }
   const categoryRaw = String(body["category"] ?? "Lainnya");
   const category = (CATEGORIES as readonly string[]).includes(categoryRaw) ? categoryRaw : "Lainnya";
@@ -395,7 +395,7 @@ app.patch("/api/documents/:id", requireLogin, async (c) => {
   if (body.grade !== undefined) {
     const grade = Number(body.grade);
     if (!GRADES.includes(grade as (typeof GRADES)[number])) {
-      return c.json({ error: "Kelas harus 7, 8, atau 9." }, 400);
+      return c.json({ error: "Kelompok harus Umum, 7, 8, atau 9." }, 400);
     }
     updates.push("grade = ?");
     params.push(grade);

@@ -1,6 +1,7 @@
 const state = { grade: "", category: "", q: "", user: null };
 const PAGE_LIMIT = 24;
 let docPage = 1, docPages = 1, docsList = [];
+const GRADE_LABELS = { 0: "Umum", 7: "Kelas 7", 8: "Kelas 8", 9: "Kelas 9" };
 
 const KIND_ICON = {
   pdf: "📕", gambar: "🖼️", video: "🎬", audio: "🎧", dokumen: "📄",
@@ -78,7 +79,7 @@ async function loadDocs(append = false) {
     <article class="doc-card">
       <div class="doc-top">
         <div class="doc-icon kind-${esc(d.kind)}">${KIND_ICON[d.kind] ?? "📁"}</div>
-        <span class="grade-badge">Kelas ${d.grade}</span>
+        <span class="grade-badge">${esc(GRADE_LABELS[d.grade] ?? `Kelas ${d.grade}`)}</span>
       </div>
       <h3 class="doc-title">${esc(d.title)}</h3>
       ${d.description ? `<p class="doc-desc">${esc(d.description)}</p>` : ""}
